@@ -1,5 +1,7 @@
 package com.flashdash.activity.service;
 
+import com.flashdash.activity.exception.ErrorCode;
+import com.flashdash.activity.exception.FlashDashException;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.ActivityRepository;
 import com.flashdash.activity.util.UserContext;
@@ -28,7 +30,7 @@ public class ActivityService {
         String userFrn = userContext.getUserFrn();
 
         if (userFrn == null) {
-            throw new IllegalStateException("User is not authenticated");
+            throw new FlashDashException(ErrorCode.E401001, "User is not authenticated");
         }
 
         Activity activity = new Activity();
