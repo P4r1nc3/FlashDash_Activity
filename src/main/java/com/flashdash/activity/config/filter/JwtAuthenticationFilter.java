@@ -10,11 +10,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -46,6 +49,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (userFrn != null) {
                 userContext.setUserFrn(userFrn);
                 logger.info("Authenticated user: {}", userFrn);
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userFrn, null, List.of(new SimpleGrantedAuthority("USER")));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (ExpiredJwtException e) {
             logger.warn("JWT token has expired: {}", e.getMessage());
