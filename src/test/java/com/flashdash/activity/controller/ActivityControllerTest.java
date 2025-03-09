@@ -1,5 +1,6 @@
 package com.flashdash.activity.controller;
 
+import com.flashdash.activity.FlashDashActivityApplication;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.service.ActivityService;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest;
@@ -9,6 +10,8 @@ import com.flashdash.activity.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -19,9 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest(classes = FlashDashActivityApplication.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ActivityControllerTest {
 
+    @Autowired
     private ActivityController activityController;
 
     @MockitoBean
