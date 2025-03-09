@@ -5,11 +5,10 @@ import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.ActivityRepository;
 import com.flashdash.activity.util.UserContext;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
-import com.p4r1nc3.flashdash.activity.model.UserStatisticsResponse;
+import com.p4r1nc3.flashdash.activity.model.ActivityStatisticsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,10 +22,10 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = FlashDashActivityApplication.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class UserStatisticsServiceTest {
+class ActivityStatisticsServiceTest {
 
     @Autowired
-    private UserStatisticsService userStatisticsService;
+    private ActivityStatisticsService activityStatisticsService;
 
     @MockitoBean
     private ActivityRepository activityRepository;
@@ -40,7 +39,7 @@ class UserStatisticsServiceTest {
     void setUp() {
         activityRepository = mock(ActivityRepository.class);
         userContext = mock(UserContext.class);
-        userStatisticsService = new UserStatisticsService(activityRepository, userContext);
+        activityStatisticsService = new ActivityStatisticsService(activityRepository, userContext);
 
         userFrn = "frn:flashdash:user:" + UUID.randomUUID();
         when(userContext.getUserFrn()).thenReturn(userFrn);
@@ -63,7 +62,7 @@ class UserStatisticsServiceTest {
         when(activityRepository.findByUserFrn(userFrn)).thenReturn(activities);
 
         // Act
-        UserStatisticsResponse statistics = userStatisticsService.getUserStatistics();
+        ActivityStatisticsResponse statistics = activityStatisticsService.getUserStatistics();
 
         // Assert
         assertThat(statistics).isNotNull();
@@ -82,7 +81,7 @@ class UserStatisticsServiceTest {
         when(activityRepository.findByUserFrn(userFrn)).thenReturn(List.of());
 
         // Act
-        UserStatisticsResponse statistics = userStatisticsService.getUserStatistics();
+        ActivityStatisticsResponse statistics = activityStatisticsService.getUserStatistics();
 
         // Assert
         assertThat(statistics).isNotNull();
@@ -107,7 +106,7 @@ class UserStatisticsServiceTest {
         when(activityRepository.findByUserFrn(userFrn)).thenReturn(activities);
 
         // Act
-        UserStatisticsResponse statistics = userStatisticsService.getUserStatistics();
+        ActivityStatisticsResponse statistics = activityStatisticsService.getUserStatistics();
 
         // Assert
         assertThat(statistics.getCurrentStreak()).isEqualTo(1); // Reset when not consecutive
@@ -127,7 +126,7 @@ class UserStatisticsServiceTest {
         when(activityRepository.findByUserFrn(userFrn)).thenReturn(activities);
 
         // Act
-        UserStatisticsResponse statistics = userStatisticsService.getUserStatistics();
+        ActivityStatisticsResponse statistics = activityStatisticsService.getUserStatistics();
 
         // Assert
         assertThat(statistics.getCurrentStreak()).isEqualTo(3);

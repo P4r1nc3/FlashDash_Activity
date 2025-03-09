@@ -1,8 +1,8 @@
 package com.flashdash.activity.controller;
 
 import com.flashdash.activity.FlashDashActivityApplication;
-import com.flashdash.activity.service.UserStatisticsService;
-import com.p4r1nc3.flashdash.activity.model.UserStatisticsResponse;
+import com.flashdash.activity.service.ActivityStatisticsService;
+import com.p4r1nc3.flashdash.activity.model.ActivityStatisticsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -17,34 +17,34 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = FlashDashActivityApplication.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class UserStatisticsControllerTest {
+class ActivityStatisticsControllerTest {
 
     @Autowired
-    private UserStatisticsController userStatisticsController;
+    private ActivityStatisticsController activityStatisticsController;
 
     @MockitoBean
-    private UserStatisticsService userStatisticsService;
+    private ActivityStatisticsService activityStatisticsService;
 
     @BeforeEach
     void setUp() {
-        userStatisticsService = mock(UserStatisticsService.class);
-        userStatisticsController = new UserStatisticsController(userStatisticsService);
+        activityStatisticsService = mock(ActivityStatisticsService.class);
+        activityStatisticsController = new ActivityStatisticsController(activityStatisticsService);
     }
 
     @Test
     void shouldReturnUserStatisticsSuccessfully() {
         // Arrange
-        UserStatisticsResponse mockStatistics = new UserStatisticsResponse();
+        ActivityStatisticsResponse mockStatistics = new ActivityStatisticsResponse();
         mockStatistics.setCurrentStreak(5);
         mockStatistics.setTotalGamesPlayed(20);
         mockStatistics.setTotalDecksCreated(7);
         mockStatistics.setTotalQuestionsCreated(50);
         mockStatistics.setTotalFriendsAdded(15);
 
-        when(userStatisticsService.getUserStatistics()).thenReturn(mockStatistics);
+        when(activityStatisticsService.getUserStatistics()).thenReturn(mockStatistics);
 
         // Act
-        ResponseEntity<UserStatisticsResponse> response = userStatisticsController.getUserStatistics();
+        ResponseEntity<ActivityStatisticsResponse> response = activityStatisticsController.getUserStatistics();
 
         // Assert
         assertThat(response.getStatusCodeValue()).isEqualTo(200);
@@ -55,19 +55,19 @@ class UserStatisticsControllerTest {
         assertThat(response.getBody().getTotalQuestionsCreated()).isEqualTo(50);
         assertThat(response.getBody().getTotalFriendsAdded()).isEqualTo(15);
 
-        verify(userStatisticsService, times(1)).getUserStatistics();
+        verify(activityStatisticsService, times(1)).getUserStatistics();
     }
 
     @Test
     void shouldHandleExceptionWhenUserStatisticsFails() {
         // Arrange
-        when(userStatisticsService.getUserStatistics()).thenThrow(new RuntimeException("Unexpected error"));
+        when(activityStatisticsService.getUserStatistics()).thenThrow(new RuntimeException("Unexpected error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> userStatisticsController.getUserStatistics())
+        assertThatThrownBy(() -> activityStatisticsController.getUserStatistics())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Unexpected error");
 
-        verify(userStatisticsService, times(1)).getUserStatistics();
+        verify(activityStatisticsService, times(1)).getUserStatistics();
     }
 }

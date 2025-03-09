@@ -3,8 +3,8 @@ package com.flashdash.activity.service;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.ActivityRepository;
 import com.flashdash.activity.util.UserContext;
+import com.p4r1nc3.flashdash.activity.model.ActivityStatisticsResponse;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
-import com.p4r1nc3.flashdash.activity.model.UserStatisticsResponse;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -12,17 +12,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class UserStatisticsService {
+public class ActivityStatisticsService {
 
     private final ActivityRepository activityRepository;
     private final UserContext userContext;
 
-    public UserStatisticsService(ActivityRepository activityRepository, UserContext userContext) {
+    public ActivityStatisticsService(ActivityRepository activityRepository, UserContext userContext) {
         this.activityRepository = activityRepository;
         this.userContext = userContext;
     }
 
-    public UserStatisticsResponse getUserStatistics() {
+    public ActivityStatisticsResponse getUserStatistics() {
         String userFrn = userContext.getUserFrn();
         List<Activity> activities = activityRepository.findByUserFrn(userFrn);
 
@@ -44,14 +44,14 @@ public class UserStatisticsService {
 
         int streak = calculateCurrentStreak(activities);
 
-        UserStatisticsResponse userStatisticsResponse = new UserStatisticsResponse();
-        userStatisticsResponse.setCurrentStreak(streak);
-        userStatisticsResponse.setTotalGamesPlayed(totalGamesPlayed);
-        userStatisticsResponse.setTotalDecksCreated(totalDecksCreated);
-        userStatisticsResponse.setTotalQuestionsCreated(totalQuestionsCreated);
-        userStatisticsResponse.setTotalFriendsAdded(totalFriendsAdded);
+        ActivityStatisticsResponse activityStatisticsResponse = new ActivityStatisticsResponse();
+        activityStatisticsResponse.setCurrentStreak(streak);
+        activityStatisticsResponse.setTotalGamesPlayed(totalGamesPlayed);
+        activityStatisticsResponse.setTotalDecksCreated(totalDecksCreated);
+        activityStatisticsResponse.setTotalQuestionsCreated(totalQuestionsCreated);
+        activityStatisticsResponse.setTotalFriendsAdded(totalFriendsAdded);
 
-        return userStatisticsResponse;
+        return activityStatisticsResponse;
     }
 
     private int calculateCurrentStreak(List<Activity> activities) {
