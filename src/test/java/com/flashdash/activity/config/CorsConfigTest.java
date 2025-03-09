@@ -1,5 +1,6 @@
 package com.flashdash.activity.config;
 
+import com.flashdash.activity.FlashDashActivityApplication;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import org.springframework.web.filter.CorsFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@SpringBootTest(classes = CorsConfig.class)
+@SpringBootTest(classes = FlashDashActivityApplication.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CorsConfigTest {
 
