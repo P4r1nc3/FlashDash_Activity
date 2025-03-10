@@ -4,6 +4,8 @@ import com.flashdash.activity.exception.ErrorCode;
 import com.flashdash.activity.exception.FlashDashException;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.ActivityRepository;
+import com.flashdash.activity.util.FrnGenerator;
+import com.flashdash.activity.util.ResourceType;
 import com.flashdash.activity.util.UserContext;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest;
 import org.slf4j.Logger;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ActivityService {
@@ -39,7 +40,7 @@ public class ActivityService {
         }
 
         Activity activity = new Activity();
-        activity.setActivityFrn("frn:flashdash:activity:" + UUID.randomUUID());
+        activity.setActivityFrn(FrnGenerator.generateFrn(ResourceType.ACTIVITY));
         activity.setUserFrn(userFrn);
         activity.setTargetFrn(request.getTargetFrn());
         activity.setActivity(request.getActivityType());
