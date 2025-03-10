@@ -4,12 +4,13 @@ import com.flashdash.activity.model.Achievement;
 import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
+import com.flashdash.activity.util.FrnGenerator;
+import com.flashdash.activity.util.ResourceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 public abstract class BaseAchievementHandler {
 
@@ -45,7 +46,7 @@ public abstract class BaseAchievementHandler {
     protected void grantAchievement(String userFrn, AchievementType type, int level) {
         if (achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, type, level).isEmpty()) {
             Achievement achievement = new Achievement(
-                    "frn:flashdash:achievement:" + UUID.randomUUID(),
+                    FrnGenerator.generateFrn(ResourceType.ACHIEVEMENT),
                     userFrn,
                     type,
                     level,
