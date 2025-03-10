@@ -4,6 +4,8 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.List;
 @Component
 public class FriendsAddedAchievementHandler extends BaseAchievementHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(FriendsAddedAchievementHandler.class);
     private static final int[] FRIEND_LEVELS = {3, 10, 25, 50, 100};
 
     public FriendsAddedAchievementHandler(AchievementRepository achievementRepository) {
@@ -23,8 +26,11 @@ public class FriendsAddedAchievementHandler extends BaseAchievementHandler {
                 .filter(a -> a.getActivity() == ActivityTypeEnum.FRIEND_INVITE_RESPONDED)
                 .count();
 
+        logger.info("Checking friends achievements for user {}. Total friends added: {}", userFrn, totalFriends);
+
         for (int i = 0; i < FRIEND_LEVELS.length; i++) {
             if (totalFriends >= FRIEND_LEVELS[i]) {
+                logger.info("User {} achieved Friends Level {} Achievement", userFrn, i + 1);
                 grantAchievement(userFrn, AchievementType.FRIENDS_ADDED, i + 1);
             }
         }
