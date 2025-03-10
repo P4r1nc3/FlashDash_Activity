@@ -31,10 +31,13 @@ class ActivityServiceTest {
     private ActivityService activityService;
 
     @MockitoBean
-    private ActivityRepository activityRepository;
+    private UserContext userContext;
 
     @MockitoBean
-    private UserContext userContext;
+    private AchievementService achievementService;
+
+    @MockitoBean
+    private ActivityRepository activityRepository;
 
     private String userFrn;
     private String targetFrn;

@@ -18,12 +18,17 @@ import java.util.UUID;
 public class ActivityService {
 
     private static final Logger logger = LoggerFactory.getLogger(ActivityService.class);
-    private final ActivityRepository activityRepository;
-    private final UserContext userContext;
 
-    public ActivityService(ActivityRepository activityRepository, UserContext userContext) {
-        this.activityRepository = activityRepository;
+    private final UserContext userContext;
+    private final AchievementService achievementService;
+    private final ActivityRepository activityRepository;
+
+    public ActivityService(UserContext userContext,
+                           AchievementService achievementService,
+                           ActivityRepository activityRepository) {
         this.userContext = userContext;
+        this.achievementService = achievementService;
+        this.activityRepository = activityRepository;
     }
 
     public Activity logActivity(LogActivityRequest request) {
@@ -43,6 +48,8 @@ public class ActivityService {
 
         activityRepository.save(activity);
         logger.info("Activity logged for user {}: {}", userFrn, activity);
+        achievementService.checkAchievementsForUser(userFrn);
+
         return activity;
     }
 
