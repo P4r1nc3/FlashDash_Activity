@@ -32,11 +32,15 @@ public class TestUtils {
     }
 
     public static Achievement createAchievement() {
+        return createAchievement("frn:user:" + UUID.randomUUID(), getRandomAchievementType(), RANDOM.nextInt(5) + 1);
+    }
+
+    public static Achievement createAchievement(String userFrn, AchievementType type, int level) {
         Achievement achievement = new Achievement();
         achievement.setAchievementFrn("frn:flashdash:achievement:" + UUID.randomUUID());
-        achievement.setUserFrn("frn:user:" + UUID.randomUUID());
-        achievement.setAchievementType(getRandomAchievementType());
-        achievement.setLevel(RANDOM.nextInt(5) + 1);
+        achievement.setUserFrn(userFrn);
+        achievement.setAchievementType(type);
+        achievement.setLevel(level);
         achievement.setAchievedAt(LocalDateTime.now());
         return achievement;
     }
