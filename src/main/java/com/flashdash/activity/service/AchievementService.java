@@ -12,23 +12,28 @@ import java.util.List;
 public class AchievementService {
 
     private final ActivityRepository activityRepository;
+    private final BaseAchievementHandler achievementChain;
 
-    public AchievementService(ActivityRepository activityRepository) {
+    public AchievementService(ActivityRepository activityRepository,
+                              GamesPlayedAchievementHandler gamesPlayedAchievementHandler,
+                              DecksCreatedAchievementHandler decksCreatedAchievementHandler,
+                              QuestionsCreatedAchievementHandler questionsCreatedAchievementHandler,
+                              FriendsAddedAchievementHandler friendsAddedAchievementHandler,
+                              StreakAchievementHandler streakAchievementHandler) {
         this.activityRepository = activityRepository;
+
+        this.achievementChain = BaseAchievementHandler.link(
+                gamesPlayedAchievementHandler,
+                decksCreatedAchievementHandler,
+                questionsCreatedAchievementHandler,
+                friendsAddedAchievementHandler,
+                streakAchievementHandler
+        );
     }
 
     @Async
     public void checkAchievementsForUser(String userFrn) {
         List<Activity> activities = activityRepository.findByUserFrn(userFrn);
-
-        BaseAchievementHandler achievementChain = BaseAchievementHandler.link(
-                new GamesPlayedAchievementHandler(),
-                new DecksCreatedAchievementHandler(),
-                new QuestionsCreatedAchievementHandler(),
-                new FriendsAddedAchievementHandler(),
-                new StreakAchievementHandler()
-        );
-
         achievementChain.checkAchievement(userFrn, activities);
     }
 }
