@@ -12,7 +12,7 @@ import org.springframework.web.filter.CorsFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@SpringBootTest(classes = FlashDashActivityApplication.class)
+@SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CorsConfigTest {
 

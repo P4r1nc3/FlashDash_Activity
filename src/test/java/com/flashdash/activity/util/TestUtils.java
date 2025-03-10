@@ -17,13 +17,17 @@ public class TestUtils {
     private static final Random RANDOM = new Random();
 
     public static Activity createActivity(String userFrn, String targetFrn, ActivityTypeEnum activityType) {
+        return createActivity(userFrn, targetFrn, activityType, LocalDateTime.now());
+    }
+
+    public static Activity createActivity(String userFrn, String targetFrn, ActivityTypeEnum activityType, LocalDateTime createdAt) {
         Activity activity = new Activity();
         activity.setActivityFrn("frn:flashdash:activity:" + UUID.randomUUID());
         activity.setUserFrn(userFrn);
         activity.setTargetFrn(targetFrn);
         activity.setActivity(activityType);
-        activity.setCreatedAt(LocalDateTime.now());
-        activity.setUpdatedAt(LocalDateTime.now());
+        activity.setCreatedAt(createdAt);
+        activity.setUpdatedAt(createdAt);
         return activity;
     }
 
@@ -37,19 +41,12 @@ public class TestUtils {
         return achievement;
     }
 
-    public static List<Activity> createConsecutiveActivities(String userFrn, ActivityTypeEnum activityType, int days) {
+    public static List<Activity> createConsecutiveGameStreak(String userFrn, int streakLength) {
         List<Activity> activities = new ArrayList<>();
-        LocalDateTime currentDate = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
-        for (int i = 0; i < days; i++) {
-            Activity activity = new Activity();
-            activity.setActivityFrn("frn:flashdash:activity:" + UUID.randomUUID());
-            activity.setUserFrn(userFrn);
-            activity.setTargetFrn("frn:flashdash:streak-test");
-            activity.setActivity(activityType);
-            activity.setCreatedAt(currentDate.minusDays(i));
-            activity.setUpdatedAt(currentDate.minusDays(i));
-            activities.add(activity);
+        for (int i = 0; i < streakLength; i++) {
+            activities.add(createActivity(userFrn, "frn:game:" + UUID.randomUUID(), ActivityTypeEnum.GAME_FINISHED, now.minusDays(i)));
         }
 
         return activities;
@@ -67,21 +64,6 @@ public class TestUtils {
         List<Activity> activities = new ArrayList<>();
         for (int i = 0; i < questionCount; i++) {
             activities.add(createActivity(userFrn, "frn:question:" + UUID.randomUUID(), ActivityTypeEnum.QUESTION_CREATED));
-        }
-        return activities;
-    }
-
-    public static List<Activity> createConsecutiveGameStreak(String userFrn, int daysStreak) {
-        List<Activity> activities = new ArrayList<>();
-        for (int i = 0; i < daysStreak; i++) {
-            Activity activity = new Activity();
-            activity.setActivityFrn("frn:flashdash:activity:" + UUID.randomUUID());
-            activity.setUserFrn(userFrn);
-            activity.setTargetFrn("frn:game:" + UUID.randomUUID());
-            activity.setActivity(ActivityTypeEnum.GAME_FINISHED);
-            activity.setCreatedAt(LocalDateTime.now().minusDays(i));
-            activity.setUpdatedAt(LocalDateTime.now().minusDays(i));
-            activities.add(activity);
         }
         return activities;
     }
