@@ -1,6 +1,5 @@
 package com.flashdash.activity.repository;
 
-import com.flashdash.activity.FlashDashActivityApplication;
 import com.flashdash.activity.model.Achievement;
 import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.util.TestUtils;
@@ -93,6 +92,46 @@ class AchievementRepositoryTest {
         // Act
         Optional<Achievement> foundAchievement = achievementRepository.findByUserFrnAndAchievementTypeAndLevel(
                 "frn:user:unknown", AchievementType.GAMES_PLAYED, 99);
+
+        // Assert
+        assertThat(foundAchievement).isEmpty();
+    }
+
+    @Test
+    void shouldFindAchievementByFrnAndUserFrn() {
+        // Arrange
+        Achievement achievement = TestUtils.createAchievement();
+        achievementRepository.save(achievement);
+
+        // Act
+        Optional<Achievement> foundAchievement = achievementRepository.findByAchievementFrnAndUserFrn(
+                achievement.getAchievementFrn(), achievement.getUserFrn());
+
+        // Assert
+        assertThat(foundAchievement).isPresent();
+        assertThat(foundAchievement.get().getAchievementFrn()).isEqualTo(achievement.getAchievementFrn());
+        assertThat(foundAchievement.get().getUserFrn()).isEqualTo(achievement.getUserFrn());
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalWhenAchievementFrnNotFound() {
+        // Act
+        Optional<Achievement> foundAchievement = achievementRepository.findByAchievementFrnAndUserFrn(
+                "frn:flashdash:achievement:nonexistent", "frn:user:123");
+
+        // Assert
+        assertThat(foundAchievement).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalWhenUserFrnDoesNotMatch() {
+        // Arrange
+        Achievement achievement = TestUtils.createAchievement();
+        achievementRepository.save(achievement);
+
+        // Act
+        Optional<Achievement> foundAchievement = achievementRepository.findByAchievementFrnAndUserFrn(
+                achievement.getAchievementFrn(), "frn:user:wrongUser");
 
         // Assert
         assertThat(foundAchievement).isEmpty();
