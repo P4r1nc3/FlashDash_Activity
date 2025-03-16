@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/activity/statistics")
+@RequestMapping("/activities/statistics")
 public class ActivityStatisticsController {
 
     private final ActivityStatisticsService activityStatisticsService;
