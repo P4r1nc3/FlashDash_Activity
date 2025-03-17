@@ -1,6 +1,5 @@
 package com.flashdash.activity.service;
 
-import com.flashdash.activity.FlashDashActivityApplication;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.ActivityRepository;
 import com.flashdash.activity.util.UserContext;
