@@ -141,12 +141,17 @@
         <dependency>
             <groupId>com.p4r1nc3.flashdash</groupId>
             <artifactId>flashdash-core-api</artifactId>
-            <version>1.0.7</version>
+            <version>1.1.4</version>
         </dependency>
         <dependency>
             <groupId>com.p4r1nc3.flashdash</groupId>
             <artifactId>flashdash-activity-api</artifactId>
-            <version>1.0.6</version>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.p4r1nc3.flashdash</groupId>
+            <artifactId>flashdash-notification-api</artifactId>
+            <version>1.0.7</version>
         </dependency>
     </dependencies>
 
