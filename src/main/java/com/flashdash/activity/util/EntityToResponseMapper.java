@@ -1,52 +1,60 @@
 package com.flashdash.activity.util;
 
 import com.flashdash.activity.model.Achievement;
-import com.flashdash.activity.model.AchievementType;
+import com.flashdash.activity.model.AchievementSchema;
 import com.p4r1nc3.flashdash.activity.model.AchievementResponse;
+import com.p4r1nc3.flashdash.activity.model.AchievementSchemaResponse;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 public class EntityToResponseMapper {
 
     public static AchievementResponse mapToAchievementResponse(Achievement achievement) {
-        return new AchievementResponse()
-                .achievementId(extractId(achievement.getAchievementFrn()))
-                .achievementFrn(achievement.getAchievementFrn())
-                .achievementType(AchievementResponse.AchievementTypeEnum.fromValue(achievement.getAchievementType().name()))
-                .level(achievement.getLevel())
-                .maxLevel(getMaxLevelForType(achievement.getAchievementType()))
-                .requiredCount(getRequiredCountForLevel(achievement.getAchievementType(), achievement.getLevel()))
-                .description(getDescriptionForType(achievement.getAchievementType()))
-                .achievedAt(achievement.getAchievedAt().atOffset(java.time.ZoneOffset.UTC));
+        AchievementResponse response = new AchievementResponse();
+        setAchievementFields(response, achievement);
+        return response;
     }
 
-    private static int getMaxLevelForType(AchievementType achievementType) {
-        return switch (achievementType) {
-            case STREAK_ACHIEVEMENT -> 5;
-            case GAMES_PLAYED -> 5;
-            case DECKS_CREATED -> 5;
-            case QUESTIONS_CREATED -> 5;
-            case FRIENDS_ADDED -> 5;
-        };
+    public static AchievementResponse mapToAchievementResponse(Achievement achievement, AchievementSchema schema) {
+        AchievementResponse response = new AchievementResponse();
+
+        // Set achievement fields
+        setAchievementFields(response, achievement);
+
+        // Set schema fields
+        setSchemaFields(response, schema);
+
+        return response;
     }
 
-    private static int getRequiredCountForLevel(AchievementType achievementType, int level) {
-        int[] levels = switch (achievementType) {
-            case STREAK_ACHIEVEMENT -> new int[]{3, 7, 14, 30, 50};
-            case GAMES_PLAYED -> new int[]{10, 50, 100, 500, 1000};
-            case DECKS_CREATED -> new int[]{3, 10, 25, 50, 100};
-            case QUESTIONS_CREATED -> new int[]{10, 100, 500, 1000, 5000};
-            case FRIENDS_ADDED -> new int[]{3, 10, 25, 50, 100};
-        };
-        return (level > 0 && level <= levels.length) ? levels[level - 1] : 0;
+    public static AchievementSchemaResponse mapToAchievementSchemaResponse(AchievementSchema schema) {
+        AchievementSchemaResponse response = new AchievementSchemaResponse();
+        response.setSchemaId(extractId(schema.getSchemaFrn()));
+        response.setSchemaFrn(schema.getSchemaFrn());
+        response.setName(schema.getName());
+        response.setDescription(schema.getDescription());
+        response.setAchievementType(AchievementSchemaResponse.AchievementTypeEnum.fromValue(schema.getAchievementType().name()));
+        response.setLevel(schema.getLevel());
+        response.setThreshold(schema.getThreshold());
+
+        return response;
     }
 
-    private static String getDescriptionForType(AchievementType achievementType) {
-        return switch (achievementType) {
-            case STREAK_ACHIEVEMENT -> "Achieve daily activity for a certain number of consecutive days.";
-            case GAMES_PLAYED -> "Play a specified number of games.";
-            case DECKS_CREATED -> "Create a specified number of decks.";
-            case QUESTIONS_CREATED -> "Create a specified number of questions.";
-            case FRIENDS_ADDED -> "Add a specified number of friends.";
-        };
+    private static void setAchievementFields(AchievementResponse response, Achievement achievement) {
+        response.setAchievementFrn(achievement.getAchievementFrn());
+        response.setAchievementId(extractId(achievement.getAchievementFrn()));
+        response.setAchievementType(AchievementResponse.AchievementTypeEnum.fromValue(achievement.getAchievementType().name()));
+        response.setLevel(achievement.getLevel());
+        response.setAchievedAt(OffsetDateTime.of(achievement.getAchievedAt(), ZoneOffset.UTC));
+    }
+
+    private static void setSchemaFields(AchievementResponse response, AchievementSchema schema) {
+        response.setSchemaFrn(schema.getSchemaFrn());
+        response.setSchemaId(extractId(schema.getSchemaFrn()));
+        response.setName(schema.getName());
+        response.setDescription(schema.getDescription());
+        response.setThreshold(schema.getThreshold());
     }
 
     public static String extractId(String frn) {

@@ -4,6 +4,7 @@ import com.flashdash.activity.exception.ErrorCode;
 import com.flashdash.activity.exception.FlashDashException;
 import com.flashdash.activity.service.AchievementService;
 import com.p4r1nc3.flashdash.activity.model.AchievementResponse;
+import com.p4r1nc3.flashdash.activity.model.AchievementSchemaResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -125,5 +126,101 @@ class AchievementControllerTest {
                 .hasMessage("Achievement not found");
 
         verify(achievementService, times(1)).getAchievementByFrn(achievementFrn);
+    }
+
+    @Test
+    void shouldGetAllAchievementSchemasSuccessfully() {
+        // Arrange
+        AchievementSchemaResponse schema1 = new AchievementSchemaResponse();
+        schema1.setSchemaFrn("frn:flashdash:schema:1");
+
+        AchievementSchemaResponse schema2 = new AchievementSchemaResponse();
+        schema2.setSchemaFrn("frn:flashdash:schema:2");
+
+        when(achievementService.getAllAchievementSchemas()).thenReturn(List.of(schema1, schema2));
+
+        // Act
+        ResponseEntity<List<AchievementSchemaResponse>> response = achievementController.getAllAchievementSchemas();
+
+        // Assert
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull().hasSize(2);
+        assertThat(response.getBody().get(0).getSchemaFrn()).isEqualTo("frn:flashdash:schema:1");
+        assertThat(response.getBody().get(1).getSchemaFrn()).isEqualTo("frn:flashdash:schema:2");
+
+        verify(achievementService, times(1)).getAllAchievementSchemas();
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoSchemasFound() {
+        // Arrange
+        when(achievementService.getAllAchievementSchemas()).thenReturn(List.of());
+
+        // Act
+        ResponseEntity<List<AchievementSchemaResponse>> response = achievementController.getAllAchievementSchemas();
+
+        // Assert
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).isEmpty();
+
+        verify(achievementService, times(1)).getAllAchievementSchemas();
+    }
+
+    @Test
+    void shouldGetAchievementSchemaByFrnSuccessfully() {
+        // Arrange
+        String schemaFrn = "frn:flashdash:schema:" + UUID.randomUUID();
+        AchievementSchemaResponse schema = new AchievementSchemaResponse();
+        schema.setSchemaFrn(schemaFrn);
+        schema.setName("Achievement Schema Test");
+        schema.setDescription("Test Description");
+
+        when(achievementService.getAchievementSchema(schemaFrn)).thenReturn(schema);
+
+        // Act
+        ResponseEntity<AchievementSchemaResponse> response = achievementController.getAchievementSchema(schemaFrn);
+
+        // Assert
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getSchemaFrn()).isEqualTo(schemaFrn);
+        assertThat(response.getBody().getName()).isEqualTo("Achievement Schema Test");
+        assertThat(response.getBody().getDescription()).isEqualTo("Test Description");
+
+        verify(achievementService, times(1)).getAchievementSchema(schemaFrn);
+    }
+
+    @Test
+    void shouldThrowFlashDashExceptionWhenSchemaNotFound() {
+        // Arrange
+        String schemaFrn = "frn:flashdash:schema:" + UUID.randomUUID();
+
+        doThrow(new FlashDashException(ErrorCode.E404002, "Achievement schema not found"))
+                .when(achievementService).getAchievementSchema(schemaFrn);
+
+        // Act & Assert
+        assertThatThrownBy(() -> achievementController.getAchievementSchema(schemaFrn))
+                .isInstanceOf(FlashDashException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.E404002)
+                .hasMessage("Achievement schema not found");
+
+        verify(achievementService, times(1)).getAchievementSchema(schemaFrn);
+    }
+
+    @Test
+    void shouldThrowFlashDashExceptionWhenInvalidSchemaFrn() {
+        // Arrange
+        String invalidSchemaFrn = "invalid-frn-format";
+
+        doThrow(new FlashDashException(ErrorCode.E400001, "Invalid schema FRN format"))
+                .when(achievementService).getAchievementSchema(invalidSchemaFrn);
+
+        // Act & Assert
+        assertThatThrownBy(() -> achievementController.getAchievementSchema(invalidSchemaFrn))
+                .isInstanceOf(FlashDashException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.E400001)
+                .hasMessage("Invalid schema FRN format");
+
+        verify(achievementService, times(1)).getAchievementSchema(invalidSchemaFrn);
     }
 }
