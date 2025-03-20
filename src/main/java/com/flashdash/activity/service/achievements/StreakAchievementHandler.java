@@ -3,23 +3,24 @@ package com.flashdash.activity.service.achievements;
 import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
+import com.flashdash.activity.repository.AchievementSchemaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public class StreakAchievementHandler extends BaseAchievementHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(StreakAchievementHandler.class);
-    private static final int[] STREAK_LEVELS = {3, 7, 14, 30, 50};
 
-    public StreakAchievementHandler(AchievementRepository achievementRepository) {
-        super(achievementRepository);
+    public StreakAchievementHandler(AchievementRepository achievementRepository,
+                                    AchievementSchemaRepository schemaRepository) {
+        super(achievementRepository, schemaRepository);
     }
 
     @Override
@@ -28,10 +29,18 @@ public class StreakAchievementHandler extends BaseAchievementHandler {
 
         logger.info("Checking streak achievements for user {}. Current streak: {}", userFrn, streak);
 
-        for (int i = 0; i < STREAK_LEVELS.length; i++) {
-            if (streak >= STREAK_LEVELS[i]) {
-                logger.info("User {} achieved Streak Level {}", userFrn, i + 1);
-                grantAchievement(userFrn, AchievementType.STREAK_ACHIEVEMENT, i + 1);
+        // Get achievement levels and thresholds from the database
+        Map<Integer, Integer> levelsAndThresholds = getAchievementLevelsAndThresholds(AchievementType.STREAK_ACHIEVEMENT);
+
+        // Check each level
+        for (Map.Entry<Integer, Integer> entry : levelsAndThresholds.entrySet()) {
+            int level = entry.getKey();
+            int threshold = entry.getValue();
+
+            if (streak >= threshold) {
+                logger.info("User {} achieved Streak Level {} Achievement (threshold: {})",
+                        userFrn, level, threshold);
+                grantAchievement(userFrn, AchievementType.STREAK_ACHIEVEMENT, level);
             }
         }
 
