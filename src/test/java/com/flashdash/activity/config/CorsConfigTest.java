@@ -28,7 +28,7 @@ class CorsConfigTest {
         assertThat(source).isNotNull();
         CorsConfiguration config = source.getCorsConfigurations().get("/**");
         assertThat(config).isNotNull();
-        assertThat(config.getAllowedOrigins()).containsExactly("http://localhost:8080");
+        assertThat(config.getAllowedOrigins()).containsExactlyInAnyOrder("http://localhost:8080", "http://localhost:5173");
         assertThat(config.getAllowedMethods()).containsExactlyInAnyOrder("GET", "POST", "PUT", "DELETE", "OPTIONS");
         assertThat(config.getAllowedHeaders()).containsExactly("*");
         assertThat(config.getAllowCredentials()).isTrue();
