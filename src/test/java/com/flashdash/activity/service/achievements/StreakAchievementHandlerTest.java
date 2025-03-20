@@ -1,18 +1,21 @@
 package com.flashdash.activity.service.achievements;
 
 import com.flashdash.activity.model.Achievement;
+import com.flashdash.activity.model.AchievementSchema;
 import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
+import com.flashdash.activity.repository.AchievementSchemaRepository;
 import com.flashdash.activity.util.TestUtils;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,12 +30,67 @@ class StreakAchievementHandlerTest {
     @MockitoBean
     private AchievementRepository achievementRepository;
 
-    @Autowired
+    @MockitoBean
+    private AchievementSchemaRepository schemaRepository;
+
     private StreakAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new StreakAchievementHandler(achievementRepository);
+        handler = new StreakAchievementHandler(achievementRepository, schemaRepository);
+
+        // Mock schemas for levels 1-4
+        List<AchievementSchema> schemas = new ArrayList<>();
+
+        // Level 1: 3 day streak
+        schemas.add(new AchievementSchema(
+                "frn:flashdash:achievementschema:streak_achievement:1",
+                AchievementType.STREAK_ACHIEVEMENT,
+                1,
+                3,
+                "Streak Achievement Level 1",
+                "Achieve a 3-day streak"
+        ));
+
+        // Level 2: 7 day streak
+        schemas.add(new AchievementSchema(
+                "frn:flashdash:achievementschema:streak_achievement:2",
+                AchievementType.STREAK_ACHIEVEMENT,
+                2,
+                7,
+                "Streak Achievement Level 2",
+                "Achieve a 7-day streak"
+        ));
+
+        // Level 3: 14 day streak
+        schemas.add(new AchievementSchema(
+                "frn:flashdash:achievementschema:streak_achievement:3",
+                AchievementType.STREAK_ACHIEVEMENT,
+                3,
+                14,
+                "Streak Achievement Level 3",
+                "Achieve a 14-day streak"
+        ));
+
+        // Level 4: 30 day streak
+        schemas.add(new AchievementSchema(
+                "frn:flashdash:achievementschema:streak_achievement:4",
+                AchievementType.STREAK_ACHIEVEMENT,
+                4,
+                30,
+                "Streak Achievement Level 4",
+                "Achieve a 30-day streak"
+        ));
+
+        // Mock schema repository
+        when(schemaRepository.findByAchievementType(AchievementType.STREAK_ACHIEVEMENT))
+                .thenReturn(schemas);
+
+        // Mock findByAchievementTypeAndLevel for each level
+        for (AchievementSchema schema : schemas) {
+            when(schemaRepository.findByAchievementTypeAndLevel(AchievementType.STREAK_ACHIEVEMENT, schema.getLevel()))
+                    .thenReturn(Optional.of(schema));
+        }
     }
 
     @Test
@@ -55,6 +113,7 @@ class StreakAchievementHandlerTest {
         assertThat(savedAchievement.getUserFrn()).isEqualTo(userFrn);
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.STREAK_ACHIEVEMENT);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
+        assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:streak_achievement:1");
     }
 
     @Test
@@ -63,8 +122,18 @@ class StreakAchievementHandlerTest {
         String userFrn = "frn:user:" + UUID.randomUUID();
         List<Activity> activities = TestUtils.createConsecutiveGameStreak(userFrn, 3);
 
+        String schemaFrn = "frn:flashdash:achievementschema:streak_achievement:1";
+        Achievement existingAchievement = new Achievement(
+                "frn:achievement:1",
+                userFrn,
+                AchievementType.STREAK_ACHIEVEMENT,
+                1,
+                schemaFrn,
+                LocalDateTime.now().minusDays(1)
+        );
+
         when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.STREAK_ACHIEVEMENT, 1))
-                .thenReturn(Optional.of(new Achievement("frn:achievement:1", userFrn, AchievementType.STREAK_ACHIEVEMENT, 1, null)));
+                .thenReturn(Optional.of(existingAchievement));
 
         // Act
         handler.checkAchievement(userFrn, activities);
@@ -96,7 +165,32 @@ class StreakAchievementHandlerTest {
 
         assertThat(savedAchievements)
                 .extracting(Achievement::getLevel)
-                .containsExactlyInAnyOrder(1, 2, 3, 4);
+                .containsExactly(1, 2, 3, 4);
+
+        // Verify schema FRNs are correct
+        assertThat(savedAchievements)
+                .extracting(Achievement::getSchemaFrn)
+                .containsExactly(
+                        "frn:flashdash:achievementschema:streak_achievement:1",
+                        "frn:flashdash:achievementschema:streak_achievement:2",
+                        "frn:flashdash:achievementschema:streak_achievement:3",
+                        "frn:flashdash:achievementschema:streak_achievement:4"
+                );
     }
 
+    @Test
+    void shouldNotGrantAchievementForInsufficientStreak() {
+        // Arrange
+        String userFrn = "frn:user:" + UUID.randomUUID();
+        List<Activity> activities = TestUtils.createConsecutiveGameStreak(userFrn, 2); // Only 2 days, threshold is 3
+
+        when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.STREAK_ACHIEVEMENT, 1))
+                .thenReturn(Optional.empty());
+
+        // Act
+        handler.checkAchievement(userFrn, activities);
+
+        // Assert - Threshold not met, so save should not be called
+        verify(achievementRepository, never()).save(any(Achievement.class));
+    }
 }
