@@ -10,7 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface AchievementSchemaRepository extends JpaRepository<AchievementSchema, String> {
-    List<AchievementSchema> findByAchievementType(AchievementType achievementType);
+    Optional<AchievementSchema> findBySchemaFrn(String schemaFrn);
     Optional<AchievementSchema> findByAchievementTypeAndLevel(AchievementType achievementType, int level);
+    List<AchievementSchema> findByAchievementType(AchievementType achievementType);
     List<AchievementSchema> findByAchievementTypeOrderByLevelAsc(AchievementType achievementType);
 }

@@ -75,7 +75,7 @@ public class AchievementService {
         }
 
         logger.info("Fetching achievements for user: {}", userFrn);
-        List<Achievement> achievements = achievementRepository.findByUserFrn(userFrn);
+        List<Achievement> achievements = achievementRepository.findByUserFrnOrderByAchievedAtDesc(userFrn);
 
         if (achievements.isEmpty()) {
             return List.of();
@@ -93,16 +93,6 @@ public class AchievementService {
         Map<String, AchievementSchema> schemaMap = schemas.stream()
                 .collect(Collectors.toMap(AchievementSchema::getSchemaFrn, schema -> schema));
 
-        // Get maximum levels for each achievement type for UI display
-        Map<com.flashdash.activity.model.AchievementType, Integer> maxLevelMap = schemas.stream()
-                .collect(Collectors.groupingBy(
-                        AchievementSchema::getAchievementType,
-                        Collectors.mapping(AchievementSchema::getLevel, Collectors.maxBy(Integer::compareTo))
-                ))
-                .entrySet().stream()
-                .filter(entry -> entry.getValue().isPresent())
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get()));
-
         return achievements.stream()
                 .map(achievement -> {
                     AchievementSchema schema = schemaMap.get(achievement.getSchemaFrn());
@@ -112,11 +102,7 @@ public class AchievementService {
                         return null;
                     }
 
-                    // Get the max level for this achievement type
-                    Integer maxLevel = maxLevelMap.getOrDefault(achievement.getAchievementType(), 5); // Default to 5 if not found
-
-                    return EntityToResponseMapper.mapToAchievementResponse(
-                            achievement, schema, maxLevel);
+                    return EntityToResponseMapper.mapToAchievementResponse(achievement, schema);
                 })
                 .filter(response -> response != null)
                 .collect(Collectors.toList());
@@ -131,53 +117,43 @@ public class AchievementService {
         }
 
         logger.info("Fetching achievement with FRN: {} for user: {}", achievementFrn, userFrn);
-        Optional<Achievement> achievementOpt = achievementRepository.findByAchievementFrnAndUserFrn(achievementFrn, userFrn);
+        Optional<Achievement> achievementOptional = achievementRepository.findByAchievementFrnAndUserFrn(achievementFrn, userFrn);
 
-        if (achievementOpt.isEmpty()) {
+        if (achievementOptional.isEmpty()) {
             logger.warn("Achievement not found for FRN: {}", achievementFrn);
             throw new FlashDashException(ErrorCode.E404001, "Achievement not found");
         }
 
-        Achievement achievement = achievementOpt.get();
+        Achievement achievement = achievementOptional.get();
 
         // Fetch the schema for this achievement
-        Optional<AchievementSchema> schemaOpt = schemaRepository.findById(achievement.getSchemaFrn());
+        Optional<AchievementSchema> schemaOptional = schemaRepository.findBySchemaFrn(achievement.getSchemaFrn());
 
-        if (schemaOpt.isEmpty()) {
+        if (schemaOptional.isEmpty()) {
             logger.warn("Schema not found for achievement: {}", achievementFrn);
             throw new FlashDashException(ErrorCode.E404001, "Achievement schema not found");
         }
 
-        AchievementSchema schema = schemaOpt.get();
+        AchievementSchema schema = schemaOptional.get();
 
-        // Get max level for this achievement type
-        Integer maxLevel = schemaRepository.findByAchievementTypeOrderByLevelAsc(achievement.getAchievementType())
-                .stream()
-                .map(AchievementSchema::getLevel)
-                .max(Integer::compareTo)
-                .orElse(5); // Default to 5 if not found
-
-        return EntityToResponseMapper.mapToAchievementResponse(achievement, schema, maxLevel);
+        return EntityToResponseMapper.mapToAchievementResponse(achievement, schema);
     }
 
     @Transactional(readOnly = true)
     public List<AchievementResponse> getAllAchievementSchemas() {
         List<AchievementSchema> schemas = schemaRepository.findAll();
 
-        Map<AchievementType, Integer> maxLevelMap = schemas.stream()
-                .collect(Collectors.groupingBy(
-                        AchievementSchema::getAchievementType,
-                        Collectors.mapping(AchievementSchema::getLevel, Collectors.maxBy(Integer::compareTo))
-                ))
-                .entrySet().stream()
-                .filter(entry -> entry.getValue().isPresent())
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get()));
+        return schemas.stream()
+                .map(EntityToResponseMapper::mapSchemaToAchievementResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AchievementResponse> getAchievementSchemasByType(AchievementType type) {
+        List<AchievementSchema> schemas = schemaRepository.findByAchievementTypeOrderByLevelAsc(type);
 
         return schemas.stream()
-                .map(schema -> {
-                    Integer maxLevel = maxLevelMap.getOrDefault(schema.getAchievementType(), 5);
-                    return EntityToResponseMapper.mapSchemaToAchievementResponse(schema, maxLevel);
-                })
+                .map(EntityToResponseMapper::mapSchemaToAchievementResponse)
                 .collect(Collectors.toList());
     }
 }
