@@ -13,6 +13,7 @@ import com.flashdash.activity.service.achievements.*;
 import com.flashdash.activity.util.EntityToResponseMapper;
 import com.flashdash.activity.util.UserContext;
 import com.p4r1nc3.flashdash.activity.model.AchievementResponse;
+import com.p4r1nc3.flashdash.activity.model.AchievementSchemaResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -140,20 +141,31 @@ public class AchievementService {
     }
 
     @Transactional(readOnly = true)
-    public List<AchievementResponse> getAllAchievementSchemas() {
+    public List<AchievementSchemaResponse> getAllAchievementSchemas() {
         List<AchievementSchema> schemas = schemaRepository.findAll();
 
         return schemas.stream()
-                .map(EntityToResponseMapper::mapSchemaToAchievementResponse)
+                .map(EntityToResponseMapper::mapToAchievementSchemaResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<AchievementResponse> getAchievementSchemasByType(AchievementType type) {
+    public AchievementSchemaResponse getAchievementSchema(String schemaFrn) {
+        Optional<AchievementSchema> schemaOptional = schemaRepository.findBySchemaFrn(schemaFrn);
+
+        if (schemaOptional.isEmpty()) {
+            throw new FlashDashException(ErrorCode.E404002, "Achievement schema not found");
+        }
+
+        return EntityToResponseMapper.mapToAchievementSchemaResponse(schemaOptional.get());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AchievementSchemaResponse> getAchievementSchemasByType(AchievementType type) {
         List<AchievementSchema> schemas = schemaRepository.findByAchievementTypeOrderByLevelAsc(type);
 
         return schemas.stream()
-                .map(EntityToResponseMapper::mapSchemaToAchievementResponse)
+                .map(EntityToResponseMapper::mapToAchievementSchemaResponse)
                 .collect(Collectors.toList());
     }
 }

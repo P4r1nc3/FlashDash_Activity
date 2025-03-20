@@ -12,6 +12,7 @@ import com.flashdash.activity.repository.ActivityRepository;
 import com.flashdash.activity.util.TestUtils;
 import com.flashdash.activity.util.UserContext;
 import com.p4r1nc3.flashdash.activity.model.AchievementResponse;
+import com.p4r1nc3.flashdash.activity.model.AchievementSchemaResponse;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -301,14 +302,14 @@ class AchievementServiceTest {
         when(schemaRepository.findAll()).thenReturn(mockSchemas);
 
         // Act
-        List<AchievementResponse> responses = achievementService.getAllAchievementSchemas();
+        List<AchievementSchemaResponse> responses = achievementService.getAllAchievementSchemas();
 
         // Assert
         assertThat(responses).hasSize(2);
         assertThat(responses.stream()
-                .map(AchievementResponse::getAchievementType)
+                .map(AchievementSchemaResponse::getAchievementType)
                 .collect(Collectors.toList()))
-                .containsExactlyInAnyOrder(AchievementResponse.AchievementTypeEnum.GAMES_PLAYED, AchievementResponse.AchievementTypeEnum.STREAK_ACHIEVEMENT);
+                .containsExactlyInAnyOrder(AchievementSchemaResponse.AchievementTypeEnum.GAMES_PLAYED, AchievementSchemaResponse.AchievementTypeEnum.STREAK_ACHIEVEMENT);
 
         verify(schemaRepository, times(1)).findAll();
     }
@@ -340,15 +341,69 @@ class AchievementServiceTest {
         when(schemaRepository.findByAchievementTypeOrderByLevelAsc(type)).thenReturn(mockSchemas);
 
         // Act
-        List<AchievementResponse> responses = achievementService.getAchievementSchemasByType(type);
+        List<AchievementSchemaResponse> responses = achievementService.getAchievementSchemasByType(type);
 
         // Assert
         assertThat(responses).hasSize(2);
         assertThat(responses.stream()
-                .map(AchievementResponse::getLevel)
+                .map(AchievementSchemaResponse::getLevel)
                 .collect(Collectors.toList()))
                 .containsExactly(1, 2);
 
         verify(schemaRepository, times(1)).findByAchievementTypeOrderByLevelAsc(type);
+    }
+
+    @Test
+    void shouldGetAchievementSchemaByFrnSuccessfully() {
+        // Arrange
+        String schemaFrn = "frn:flashdash:achievement-schema:games-level1";
+
+        AchievementSchema mockSchema = new AchievementSchema(
+                schemaFrn,
+                AchievementType.GAMES_PLAYED,
+                1,
+                10,
+                "Games Played Level 1",
+                "Play 10 games"
+        );
+
+        when(schemaRepository.findBySchemaFrn(schemaFrn))
+                .thenReturn(Optional.of(mockSchema));
+
+        // Act
+        AchievementSchemaResponse response = achievementService.getAchievementSchema(schemaFrn);
+
+        System.out.println(response);
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getSchemaFrn()).isEqualTo(schemaFrn);
+        assertThat(response.getAchievementType()).isEqualTo(AchievementSchemaResponse.AchievementTypeEnum.GAMES_PLAYED);
+        assertThat(response.getLevel()).isEqualTo(1);
+        assertThat(response.getName()).isEqualTo("Games Played Level 1");
+        assertThat(response.getDescription()).isEqualTo("Play 10 games");
+        assertThat(response.getThreshold()).isEqualTo(10);
+
+        verify(schemaRepository, times(1)).findBySchemaFrn(schemaFrn);
+    }
+
+    @Test
+    void shouldThrow404WhenSchemaFrnNotFound() {
+        // Arrange
+        String nonExistentSchemaFrn = "frn:flashdash:achievementschema:nonexistent";
+
+        when(schemaRepository.findBySchemaFrn(nonExistentSchemaFrn))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        FlashDashException exception = catchThrowableOfType(
+                () -> achievementService.getAchievementSchema(nonExistentSchemaFrn),
+                FlashDashException.class
+        );
+
+        assertThat(exception).isNotNull();
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.E404002);
+        assertThat(exception.getMessage()).isEqualTo("Achievement schema not found");
+
+        verify(schemaRepository, times(1)).findBySchemaFrn(nonExistentSchemaFrn);
     }
 }

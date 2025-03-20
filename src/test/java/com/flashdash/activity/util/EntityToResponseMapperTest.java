@@ -4,6 +4,7 @@ import com.flashdash.activity.model.Achievement;
 import com.flashdash.activity.model.AchievementSchema;
 import com.flashdash.activity.model.AchievementType;
 import com.p4r1nc3.flashdash.activity.model.AchievementResponse;
+import com.p4r1nc3.flashdash.activity.model.AchievementSchemaResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -82,7 +83,7 @@ class EntityToResponseMapperTest {
     }
 
     @Test
-    void shouldMapSchemaToAchievementResponse() {
+    void shouldMapToAchievementSchemaResponse() {
         // Given
         String schemaFrn = "frn:flashdash:achievement-schema:games-level2";
         AchievementSchema schema = new AchievementSchema(
@@ -95,13 +96,13 @@ class EntityToResponseMapperTest {
         );
 
         // When
-        AchievementResponse response = EntityToResponseMapper.mapSchemaToAchievementResponse(schema);
+        AchievementSchemaResponse response = EntityToResponseMapper.mapToAchievementSchemaResponse(schema);
 
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getSchemaFrn()).isEqualTo(schemaFrn);
         assertThat(response.getSchemaId()).isEqualTo("games-level2");
-        assertThat(response.getAchievementType()).isEqualTo(AchievementResponse.AchievementTypeEnum.GAMES_PLAYED);
+        assertThat(response.getAchievementType()).isEqualTo(AchievementSchemaResponse.AchievementTypeEnum.GAMES_PLAYED);
         assertThat(response.getLevel()).isEqualTo(2);
         assertThat(response.getName()).isEqualTo("Games Played Level 2");
         assertThat(response.getDescription()).isEqualTo("Play a certain number of games.");

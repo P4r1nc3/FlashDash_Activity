@@ -3,6 +3,7 @@ package com.flashdash.activity.util;
 import com.flashdash.activity.model.Achievement;
 import com.flashdash.activity.model.AchievementSchema;
 import com.p4r1nc3.flashdash.activity.model.AchievementResponse;
+import com.p4r1nc3.flashdash.activity.model.AchievementSchemaResponse;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -27,15 +28,15 @@ public class EntityToResponseMapper {
         return response;
     }
 
-    public static AchievementResponse mapSchemaToAchievementResponse(AchievementSchema schema) {
-        AchievementResponse response = new AchievementResponse();
-
-        // Set schema fields
-        setSchemaFields(response, schema);
-
-        // Set type and level from schema
-        response.setAchievementType(AchievementResponse.AchievementTypeEnum.fromValue(schema.getAchievementType().name()));
+    public static AchievementSchemaResponse mapToAchievementSchemaResponse(AchievementSchema schema) {
+        AchievementSchemaResponse response = new AchievementSchemaResponse();
+        response.setSchemaId(extractId(schema.getSchemaFrn()));
+        response.setSchemaFrn(schema.getSchemaFrn());
+        response.setName(schema.getName());
+        response.setDescription(schema.getDescription());
+        response.setAchievementType(AchievementSchemaResponse.AchievementTypeEnum.fromValue(schema.getAchievementType().name()));
         response.setLevel(schema.getLevel());
+        response.setThreshold(schema.getThreshold());
 
         return response;
     }
