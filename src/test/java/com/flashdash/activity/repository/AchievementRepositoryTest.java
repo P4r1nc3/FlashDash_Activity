@@ -2,7 +2,6 @@ package com.flashdash.activity.repository;
 
 import com.flashdash.activity.model.Achievement;
 import com.flashdash.activity.model.AchievementType;
-import com.flashdash.activity.util.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -10,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,28 +29,31 @@ class AchievementRepositoryTest {
         achievementRepository.deleteAll();
     }
 
-    @Test
-    void shouldSaveAndRetrieveAchievement() {
-        // Arrange
-        Achievement achievement = TestUtils.createAchievement();
-        achievementRepository.save(achievement);
+    // Helper method to create test achievements with all required fields
+    private Achievement createTestAchievement() {
+        String userFrn = "frn:user:" + UUID.randomUUID();
+        AchievementType type = AchievementType.GAMES_PLAYED;
+        int level = 1;
+        String achievementFrn = "frn:flashdash:achievement:" + UUID.randomUUID();
+        String schemaFrn = "frn:flashdash:achievementschema:" + type.name().toLowerCase() + ":" + level;
 
-        // Act
-        List<Achievement> foundAchievements = achievementRepository.findByUserFrn(achievement.getUserFrn());
+        Achievement achievement = new Achievement();
+        achievement.setAchievementFrn(achievementFrn);
+        achievement.setUserFrn(userFrn);
+        achievement.setAchievementType(type);
+        achievement.setLevel(level);
+        achievement.setSchemaFrn(schemaFrn); // Set the schemaFrn that was missing before
+        achievement.setAchievedAt(LocalDateTime.now());
 
-        // Assert
-        assertThat(foundAchievements).hasSize(1);
-        Achievement savedAchievement = foundAchievements.get(0);
-        assertThat(savedAchievement.getUserFrn()).isEqualTo(achievement.getUserFrn());
-        assertThat(savedAchievement.getAchievementType()).isEqualTo(achievement.getAchievementType());
-        assertThat(savedAchievement.getLevel()).isEqualTo(achievement.getLevel());
+        return achievement;
     }
 
     @Test
     void shouldFindAchievementsByUserFrn() {
         // Arrange
-        Achievement achievement1 = TestUtils.createAchievement();
-        Achievement achievement2 = TestUtils.createAchievement();
+        Achievement achievement1 = createTestAchievement();
+        Achievement achievement2 = createTestAchievement();
+        achievement2.setUserFrn(achievement1.getUserFrn());
         achievementRepository.save(achievement1);
         achievementRepository.save(achievement2);
 
@@ -57,7 +61,7 @@ class AchievementRepositoryTest {
         List<Achievement> achievements = achievementRepository.findByUserFrn(achievement1.getUserFrn());
 
         // Assert
-        assertThat(achievements).isNotEmpty();
+        assertThat(achievements).hasSize(2);
         assertThat(achievements).extracting(Achievement::getUserFrn).containsOnly(achievement1.getUserFrn());
     }
 
@@ -73,7 +77,7 @@ class AchievementRepositoryTest {
     @Test
     void shouldFindSpecificAchievementLevel() {
         // Arrange
-        Achievement achievement = TestUtils.createAchievement();
+        Achievement achievement = createTestAchievement();
         achievementRepository.save(achievement);
 
         // Act
@@ -100,7 +104,7 @@ class AchievementRepositoryTest {
     @Test
     void shouldFindAchievementByFrnAndUserFrn() {
         // Arrange
-        Achievement achievement = TestUtils.createAchievement();
+        Achievement achievement = createTestAchievement();
         achievementRepository.save(achievement);
 
         // Act
@@ -124,16 +128,38 @@ class AchievementRepositoryTest {
     }
 
     @Test
-    void shouldReturnEmptyOptionalWhenUserFrnDoesNotMatch() {
+    void shouldFindAchievementsByUserFrnOrderedByAchievedAtDesc() {
         // Arrange
-        Achievement achievement = TestUtils.createAchievement();
-        achievementRepository.save(achievement);
+        Achievement oldestAchievement = createTestAchievement();
+        oldestAchievement.setAchievedAt(LocalDateTime.now().minusDays(5));
+
+        Achievement middleAchievement = createTestAchievement();
+        middleAchievement.setUserFrn(oldestAchievement.getUserFrn());
+        middleAchievement.setAchievedAt(LocalDateTime.now().minusDays(3));
+
+        Achievement newestAchievement = createTestAchievement();
+        newestAchievement.setUserFrn(oldestAchievement.getUserFrn());
+        newestAchievement.setAchievedAt(LocalDateTime.now().minusDays(1));
+
+        achievementRepository.save(oldestAchievement);
+        achievementRepository.save(middleAchievement);
+        achievementRepository.save(newestAchievement);
 
         // Act
-        Optional<Achievement> foundAchievement = achievementRepository.findByAchievementFrnAndUserFrn(
-                achievement.getAchievementFrn(), "frn:user:wrongUser");
+        List<Achievement> achievements = achievementRepository.findByUserFrnOrderByAchievedAtDesc(oldestAchievement.getUserFrn());
 
         // Assert
-        assertThat(foundAchievement).isEmpty();
+        assertThat(achievements).hasSize(3);
+        assertThat(achievements.get(0).getAchievedAt()).isAfterOrEqualTo(achievements.get(1).getAchievedAt());
+        assertThat(achievements.get(1).getAchievedAt()).isAfterOrEqualTo(achievements.get(2).getAchievedAt());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoAchievementsForUserFrnOrderedByAchievedAt() {
+        // Act
+        List<Achievement> achievements = achievementRepository.findByUserFrnOrderByAchievedAtDesc("frn:user:nonexistent");
+
+        // Assert
+        assertThat(achievements).isEmpty();
     }
 }

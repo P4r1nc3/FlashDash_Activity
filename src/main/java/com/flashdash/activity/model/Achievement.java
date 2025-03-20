@@ -26,6 +26,9 @@ public class Achievement {
     @Column(name = "level", nullable = false)
     private int level;
 
+    @Column(name = "schema_frn", nullable = false, length = 256)
+    private String schemaFrn;
+
     @Column(name = "achieved_at", nullable = false)
     private LocalDateTime achievedAt;
 
@@ -35,11 +38,13 @@ public class Achievement {
                        String userFrn,
                        AchievementType achievementType,
                        int level,
+                       String schemaFrn,
                        LocalDateTime achievedAt) {
         this.achievementFrn = achievementFrn;
         this.userFrn = userFrn;
         this.achievementType = achievementType;
         this.level = level;
+        this.schemaFrn = schemaFrn;
         this.achievedAt = achievedAt;
     }
 }

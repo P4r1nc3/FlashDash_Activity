@@ -1,21 +1,25 @@
 package com.flashdash.activity.service.achievements;
 
 import com.flashdash.activity.model.Achievement;
+import com.flashdash.activity.model.AchievementSchema;
 import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
+import com.flashdash.activity.repository.AchievementSchemaRepository;
 import com.flashdash.activity.util.TestUtils;
+import java.time.LocalDateTime;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,12 +32,32 @@ class FriendsAddedAchievementHandlerTest {
     @MockitoBean
     private AchievementRepository achievementRepository;
 
-    @Autowired
+    @MockitoBean
+    private AchievementSchemaRepository schemaRepository;
+
     private FriendsAddedAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new FriendsAddedAchievementHandler(achievementRepository);
+        handler = new FriendsAddedAchievementHandler(achievementRepository, schemaRepository);
+
+        // Mock schema repository to return a threshold of 3 for level 1
+        AchievementSchema schema = new AchievementSchema(
+                "frn:flashdash:achievementschema:friends_added:1",
+                AchievementType.FRIENDS_ADDED,
+                1,
+                3,
+                "Social Butterfly Level 1",
+                "Add 3 friends"
+        );
+
+        Map<Integer, Integer> levelsMap = new TreeMap<>();
+        levelsMap.put(1, 3);
+
+        when(schemaRepository.findByAchievementTypeAndLevel(AchievementType.FRIENDS_ADDED, 1))
+                .thenReturn(Optional.of(schema));
+        when(schemaRepository.findByAchievementType(AchievementType.FRIENDS_ADDED))
+                .thenReturn(List.of(schema));
     }
 
     @Test
@@ -60,6 +84,7 @@ class FriendsAddedAchievementHandlerTest {
         assertThat(savedAchievement.getUserFrn()).isEqualTo(userFrn);
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.FRIENDS_ADDED);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
+        assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:friends_added:1");
     }
 
     @Test
@@ -72,13 +97,42 @@ class FriendsAddedAchievementHandlerTest {
                 TestUtils.createActivity(userFrn, "frn:friend:003", ActivityTypeEnum.FRIEND_INVITE_RESPONDED)
         );
 
+        String schemaFrn = "frn:flashdash:achievementschema:friends_added:1";
+        Achievement existingAchievement = new Achievement(
+                "frn:achievement:1",
+                userFrn,
+                AchievementType.FRIENDS_ADDED,
+                1,
+                schemaFrn,
+                LocalDateTime.now().minusDays(1)
+        );
+
         when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.FRIENDS_ADDED, 1))
-                .thenReturn(Optional.of(new Achievement("frn:achievement:1", userFrn, AchievementType.FRIENDS_ADDED, 1, null)));
+                .thenReturn(Optional.of(existingAchievement));
 
         // Act
         handler.checkAchievement(userFrn, activities);
 
-        // Assert - Osiągnięcie już istnieje, więc `save` nie powinno być wywołane
+        // Assert
+        verify(achievementRepository, never()).save(any(Achievement.class));
+    }
+
+    @Test
+    void shouldNotGrantFriendsAchievementIfThresholdNotMet() {
+        // Arrange
+        String userFrn = "frn:user:" + UUID.randomUUID();
+        List<Activity> activities = List.of(
+                TestUtils.createActivity(userFrn, "frn:friend:001", ActivityTypeEnum.FRIEND_INVITE_RESPONDED),
+                TestUtils.createActivity(userFrn, "frn:friend:002", ActivityTypeEnum.FRIEND_INVITE_RESPONDED)
+        ); // Only 2 friends, threshold is 3
+
+        when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.FRIENDS_ADDED, 1))
+                .thenReturn(Optional.empty());
+
+        // Act
+        handler.checkAchievement(userFrn, activities);
+
+        // Assert - Threshold not met, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
     }
 }

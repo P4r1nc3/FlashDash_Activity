@@ -3,21 +3,23 @@ package com.flashdash.activity.service.achievements;
 import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
+import com.flashdash.activity.repository.AchievementSchemaRepository;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class FriendsAddedAchievementHandler extends BaseAchievementHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(FriendsAddedAchievementHandler.class);
-    private static final int[] FRIEND_LEVELS = {3, 10, 25, 50, 100};
 
-    public FriendsAddedAchievementHandler(AchievementRepository achievementRepository) {
-        super(achievementRepository);
+    public FriendsAddedAchievementHandler(AchievementRepository achievementRepository,
+                                          AchievementSchemaRepository schemaRepository) {
+        super(achievementRepository, schemaRepository);
     }
 
     @Override
@@ -28,10 +30,18 @@ public class FriendsAddedAchievementHandler extends BaseAchievementHandler {
 
         logger.info("Checking friends achievements for user {}. Total friends added: {}", userFrn, totalFriends);
 
-        for (int i = 0; i < FRIEND_LEVELS.length; i++) {
-            if (totalFriends >= FRIEND_LEVELS[i]) {
-                logger.info("User {} achieved Friends Level {} Achievement", userFrn, i + 1);
-                grantAchievement(userFrn, AchievementType.FRIENDS_ADDED, i + 1);
+        // Get achievement levels and thresholds from the database
+        Map<Integer, Integer> levelsAndThresholds = getAchievementLevelsAndThresholds(AchievementType.FRIENDS_ADDED);
+
+        // Check each level
+        for (Map.Entry<Integer, Integer> entry : levelsAndThresholds.entrySet()) {
+            int level = entry.getKey();
+            int threshold = entry.getValue();
+
+            if (totalFriends >= threshold) {
+                logger.info("User {} achieved Friends Added Level {} Achievement (threshold: {})",
+                        userFrn, level, threshold);
+                grantAchievement(userFrn, AchievementType.FRIENDS_ADDED, level);
             }
         }
 

@@ -6,5 +6,6 @@ public enum ErrorCode {
     // 400 Bad Request
     E400001,
     // 404 Not Found
-    E404001;
+    E404001,
+    E404002;
 }
