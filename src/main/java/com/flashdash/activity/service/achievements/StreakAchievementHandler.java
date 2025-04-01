@@ -4,6 +4,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,8 +20,9 @@ public class StreakAchievementHandler extends BaseAchievementHandler {
     private static final Logger logger = LoggerFactory.getLogger(StreakAchievementHandler.class);
 
     public StreakAchievementHandler(AchievementRepository achievementRepository,
-                                    AchievementSchemaRepository schemaRepository) {
-        super(achievementRepository, schemaRepository);
+                                    AchievementSchemaRepository schemaRepository,
+                                    NotificationService notificationService) {
+        super(achievementRepository, schemaRepository, notificationService);
     }
 
     @Override

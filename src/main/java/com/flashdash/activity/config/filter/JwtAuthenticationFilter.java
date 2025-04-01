@@ -45,14 +45,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String token = authorizationHeader.substring(7);
         try {
             final String userFrn = jwtManager.extractUserFrn(token);
+            final String userEmail = jwtManager.extractEmail(token);
 
-            if (userFrn != null) {
-                userContext.setUserFrn(userFrn);
-                logger.info("Authenticated user: {}", userFrn);
+            if (userFrn != null && userEmail != null) {
+                if (jwtManager.validateToken(token, userFrn)) {
+                    userContext.setUserFrn(userFrn);
+                    userContext.setUserEmail(userEmail);
+                    logger.info("Authenticated user: {}, Email: {}", userFrn, userEmail);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userFrn, null, List.of(new SimpleGrantedAuthority("USER")));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userFrn, null, List.of(new SimpleGrantedAuthority("USER")));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    logger.warn("Invalid JWT token for user: {}", userFrn);
+                }
             }
         } catch (ExpiredJwtException e) {
             logger.warn("JWT token has expired: {}", e.getMessage());

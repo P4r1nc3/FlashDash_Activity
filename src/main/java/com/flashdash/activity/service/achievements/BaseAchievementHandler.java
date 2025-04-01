@@ -6,6 +6,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.flashdash.activity.util.FrnGenerator;
 import com.flashdash.activity.util.ResourceType;
 import org.slf4j.Logger;
@@ -24,12 +25,15 @@ public abstract class BaseAchievementHandler {
 
     protected final AchievementRepository achievementRepository;
     protected final AchievementSchemaRepository schemaRepository;
+    protected final NotificationService notificationService;
     protected BaseAchievementHandler nextHandler;
 
     public BaseAchievementHandler(AchievementRepository achievementRepository,
-                                  AchievementSchemaRepository schemaRepository) {
+                                  AchievementSchemaRepository schemaRepository,
+                                  NotificationService notificationService) {
         this.achievementRepository = achievementRepository;
         this.schemaRepository = schemaRepository;
+        this.notificationService = notificationService;
     }
 
     public static BaseAchievementHandler link(BaseAchievementHandler first, BaseAchievementHandler... chain) {
@@ -75,7 +79,7 @@ public abstract class BaseAchievementHandler {
                     LocalDateTime.now()
             );
             achievementRepository.save(achievement);
-
+            notificationService.sendAchievementUnlockedEmail();
             logger.info("Granted achievement: {} (Level {}) - '{}' to user {}",
                     type, level, schema.getName(), userFrn);
         } else {
