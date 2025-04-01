@@ -45,10 +45,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String token = authorizationHeader.substring(7);
         try {
             final String userFrn = jwtManager.extractUserFrn(token);
+            final String userEmail = jwtManager.extractEmail(token);
 
-            if (userFrn != null) {
+            if (userFrn != null && userEmail != null) {
                 userContext.setUserFrn(userFrn);
-                logger.info("Authenticated user: {}", userFrn);
+                userContext.setUserEmail(userEmail);
+                logger.info("Authenticated user: {}, Email: {}", userFrn, userEmail);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userFrn, null, List.of(new SimpleGrantedAuthority("USER")));
