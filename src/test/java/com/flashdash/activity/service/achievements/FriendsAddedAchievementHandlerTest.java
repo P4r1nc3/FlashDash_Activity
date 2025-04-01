@@ -6,6 +6,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.flashdash.activity.util.TestUtils;
 import java.time.LocalDateTime;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
@@ -35,11 +36,14 @@ class FriendsAddedAchievementHandlerTest {
     @MockitoBean
     private AchievementSchemaRepository schemaRepository;
 
+    @MockitoBean
+    private NotificationService notificationService;
+
     private FriendsAddedAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new FriendsAddedAchievementHandler(achievementRepository, schemaRepository);
+        handler = new FriendsAddedAchievementHandler(achievementRepository, schemaRepository, notificationService);
 
         // Mock schema repository to return a threshold of 3 for level 1
         AchievementSchema schema = new AchievementSchema(
@@ -58,6 +62,9 @@ class FriendsAddedAchievementHandlerTest {
                 .thenReturn(Optional.of(schema));
         when(schemaRepository.findByAchievementType(AchievementType.FRIENDS_ADDED))
                 .thenReturn(List.of(schema));
+
+        // Setup notification service mock
+        doNothing().when(notificationService).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -85,6 +92,9 @@ class FriendsAddedAchievementHandlerTest {
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.FRIENDS_ADDED);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
         assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:friends_added:1");
+
+        // Verify that notification service was called once
+        verify(notificationService, times(1)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -113,8 +123,11 @@ class FriendsAddedAchievementHandlerTest {
         // Act
         handler.checkAchievement(userFrn, activities);
 
-        // Assert
+        // Assert - Achievement already exists, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification service was not called
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -134,5 +147,8 @@ class FriendsAddedAchievementHandlerTest {
 
         // Assert - Threshold not met, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification service was not called
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 }

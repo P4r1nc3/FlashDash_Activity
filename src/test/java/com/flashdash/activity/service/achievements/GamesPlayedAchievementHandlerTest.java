@@ -6,6 +6,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.flashdash.activity.util.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,13 +34,16 @@ class GamesPlayedAchievementHandlerTest {
     @MockitoBean
     private AchievementSchemaRepository schemaRepository;
 
+    @MockitoBean
+    private NotificationService notificationService;
+
     private GamesPlayedAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GamesPlayedAchievementHandler(achievementRepository, schemaRepository);
+        handler = new GamesPlayedAchievementHandler(achievementRepository, schemaRepository, notificationService);
 
-        // Mock schemas for levels 1-3
+        // Mock schemas for levels 1-2
         List<AchievementSchema> schemas = new ArrayList<>();
 
         // Level 1: 10 games
@@ -52,24 +56,14 @@ class GamesPlayedAchievementHandlerTest {
                 "Play 10 games"
         ));
 
-        // Level 2: 50 games
+        // Level 2: 20 games
         schemas.add(new AchievementSchema(
                 "frn:flashdash:achievementschema:games_played:2",
                 AchievementType.GAMES_PLAYED,
                 2,
-                50,
+                20,
                 "Games Played Level 2",
-                "Play 50 games"
-        ));
-
-        // Level 3: 100 games
-        schemas.add(new AchievementSchema(
-                "frn:flashdash:achievementschema:games_played:3",
-                AchievementType.GAMES_PLAYED,
-                3,
-                100,
-                "Games Played Level 3",
-                "Play 100 games"
+                "Play 20 games"
         ));
 
         // Mock schema repository
@@ -81,6 +75,9 @@ class GamesPlayedAchievementHandlerTest {
             when(schemaRepository.findByAchievementTypeAndLevel(AchievementType.GAMES_PLAYED, schema.getLevel()))
                     .thenReturn(Optional.of(schema));
         }
+
+        // Make sure notification service doesn't throw any exceptions
+        doNothing().when(notificationService).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -104,6 +101,8 @@ class GamesPlayedAchievementHandlerTest {
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.GAMES_PLAYED);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
         assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:games_played:1");
+
+        verify(notificationService, times(1)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -130,6 +129,9 @@ class GamesPlayedAchievementHandlerTest {
 
         // Assert - Achievement already exists, so save should not be called for level 1
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification was not sent
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -142,23 +144,24 @@ class GamesPlayedAchievementHandlerTest {
                 .thenReturn(Optional.empty());
         when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.GAMES_PLAYED, 2))
                 .thenReturn(Optional.empty());
-        when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.GAMES_PLAYED, 3))
-                .thenReturn(Optional.empty());
 
         // Act
         handler.checkAchievement(userFrn, activities);
 
-        // Assert - Levels 1, 2, and 3 should be granted
-        verify(achievementRepository, times(3)).save(any(Achievement.class));
+        // Assert - Levels 1 and 2 should be granted (updated from 3 to 2 levels)
+        verify(achievementRepository, times(2)).save(any(Achievement.class));
 
         ArgumentCaptor<Achievement> captor = ArgumentCaptor.forClass(Achievement.class);
-        verify(achievementRepository, times(3)).save(captor.capture());
+        verify(achievementRepository, times(2)).save(captor.capture());
 
         List<Achievement> savedAchievements = captor.getAllValues();
-        assertThat(savedAchievements).hasSize(3);
+        assertThat(savedAchievements).hasSize(2);
 
         assertThat(savedAchievements).extracting(Achievement::getLevel)
-                .containsExactly(1, 2, 3);
+                .containsExactly(1, 2);
+
+        // Verify notification was sent twice (once for each achievement)
+        verify(notificationService, times(2)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -181,22 +184,24 @@ class GamesPlayedAchievementHandlerTest {
                 .thenReturn(Optional.of(existingLevel1));
         when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.GAMES_PLAYED, 2))
                 .thenReturn(Optional.empty());
-        when(achievementRepository.findByUserFrnAndAchievementTypeAndLevel(userFrn, AchievementType.GAMES_PLAYED, 3))
-                .thenReturn(Optional.empty());
 
         // Act
         handler.checkAchievement(userFrn, activities);
 
-        // Assert - Only levels 2 and 3 should be granted (level 1 already exists)
-        verify(achievementRepository, times(2)).save(any(Achievement.class));
+        // Assert - Only level 2 should be granted (level 1 already exists)
+        // Updated expectation from 2 to 1 achievement
+        verify(achievementRepository, times(1)).save(any(Achievement.class));
 
         ArgumentCaptor<Achievement> captor = ArgumentCaptor.forClass(Achievement.class);
-        verify(achievementRepository, times(2)).save(captor.capture());
+        verify(achievementRepository, times(1)).save(captor.capture());
 
         List<Achievement> savedAchievements = captor.getAllValues();
-        assertThat(savedAchievements).hasSize(2);
+        assertThat(savedAchievements).hasSize(1);
 
         assertThat(savedAchievements).extracting(Achievement::getLevel)
-                .containsExactly(2, 3);
+                .containsExactly(2);
+
+        // Verify notification was sent once (for the one new achievement)
+        verify(notificationService, times(1)).sendAchievementUnlockedEmail();
     }
 }

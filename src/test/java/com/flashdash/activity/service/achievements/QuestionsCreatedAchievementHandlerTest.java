@@ -6,6 +6,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.flashdash.activity.util.TestUtils;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,11 +33,14 @@ class QuestionsCreatedAchievementHandlerTest {
     @MockitoBean
     private AchievementSchemaRepository schemaRepository;
 
+    @MockitoBean
+    private NotificationService notificationService;
+
     private QuestionsCreatedAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new QuestionsCreatedAchievementHandler(achievementRepository, schemaRepository);
+        handler = new QuestionsCreatedAchievementHandler(achievementRepository, schemaRepository, notificationService);
 
         // Mock schema repository to return a threshold of 10 for level 1
         AchievementSchema schema = new AchievementSchema(
@@ -52,6 +56,9 @@ class QuestionsCreatedAchievementHandlerTest {
                 .thenReturn(Optional.of(schema));
         when(schemaRepository.findByAchievementType(AchievementType.QUESTIONS_CREATED))
                 .thenReturn(List.of(schema));
+
+        // Setup notification service mock
+        doNothing().when(notificationService).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -75,6 +82,9 @@ class QuestionsCreatedAchievementHandlerTest {
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.QUESTIONS_CREATED);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
         assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:questions_created:1");
+
+        // Verify notification service was called once
+        verify(notificationService, times(1)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -99,8 +109,11 @@ class QuestionsCreatedAchievementHandlerTest {
         // Act
         handler.checkAchievement(userFrn, activities);
 
-        // Assert
+        // Assert - Achievement already exists, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification service was not called
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -117,5 +130,8 @@ class QuestionsCreatedAchievementHandlerTest {
 
         // Assert - Threshold not met, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification service was not called
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 }

@@ -4,6 +4,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +19,9 @@ public class DecksCreatedAchievementHandler extends BaseAchievementHandler {
     private static final Logger logger = LoggerFactory.getLogger(DecksCreatedAchievementHandler.class);
 
     public DecksCreatedAchievementHandler(AchievementRepository achievementRepository,
-                                          AchievementSchemaRepository schemaRepository) {
-        super(achievementRepository, schemaRepository);
+                                          AchievementSchemaRepository schemaRepository,
+                                          NotificationService notificationService) {
+        super(achievementRepository, schemaRepository, notificationService);
     }
 
     @Override
