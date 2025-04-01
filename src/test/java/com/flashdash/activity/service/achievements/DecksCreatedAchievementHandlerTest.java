@@ -6,6 +6,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.flashdash.activity.util.TestUtils;
 import java.time.LocalDateTime;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
@@ -35,11 +36,14 @@ class DecksCreatedAchievementHandlerTest {
     @MockitoBean
     private AchievementSchemaRepository schemaRepository;
 
+    @MockitoBean
+    private NotificationService notificationService;
+
     private DecksCreatedAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new DecksCreatedAchievementHandler(achievementRepository, schemaRepository);
+        handler = new DecksCreatedAchievementHandler(achievementRepository, schemaRepository, notificationService);
 
         // Mock schema repository to return a threshold of 3 for level 1
         AchievementSchema schema = new AchievementSchema(
@@ -58,6 +62,9 @@ class DecksCreatedAchievementHandlerTest {
                 .thenReturn(Optional.of(schema));
         when(schemaRepository.findByAchievementType(AchievementType.DECKS_CREATED))
                 .thenReturn(List.of(schema));
+
+        // Setup notification service mock
+        doNothing().when(notificationService).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -85,6 +92,9 @@ class DecksCreatedAchievementHandlerTest {
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.DECKS_CREATED);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
         assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:decks_created:1");
+
+        // Verify the notification service was called
+        verify(notificationService, times(1)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -115,6 +125,9 @@ class DecksCreatedAchievementHandlerTest {
 
         // Assert - Achievement already exists, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify the notification service was NOT called since no new achievement was granted
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -134,5 +147,8 @@ class DecksCreatedAchievementHandlerTest {
 
         // Assert - Threshold not met, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify the notification service was NOT called since no achievement was granted
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 }

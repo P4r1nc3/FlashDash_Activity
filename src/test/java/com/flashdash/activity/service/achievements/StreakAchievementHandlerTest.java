@@ -6,6 +6,7 @@ import com.flashdash.activity.model.AchievementType;
 import com.flashdash.activity.model.Activity;
 import com.flashdash.activity.repository.AchievementRepository;
 import com.flashdash.activity.repository.AchievementSchemaRepository;
+import com.flashdash.activity.service.api.NotificationService;
 import com.flashdash.activity.util.TestUtils;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,11 +34,14 @@ class StreakAchievementHandlerTest {
     @MockitoBean
     private AchievementSchemaRepository schemaRepository;
 
+    @MockitoBean
+    private NotificationService notificationService;
+
     private StreakAchievementHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new StreakAchievementHandler(achievementRepository, schemaRepository);
+        handler = new StreakAchievementHandler(achievementRepository, schemaRepository, notificationService);
 
         // Mock schemas for levels 1-4
         List<AchievementSchema> schemas = new ArrayList<>();
@@ -91,6 +95,9 @@ class StreakAchievementHandlerTest {
             when(schemaRepository.findByAchievementTypeAndLevel(AchievementType.STREAK_ACHIEVEMENT, schema.getLevel()))
                     .thenReturn(Optional.of(schema));
         }
+
+        // Setup notification service mock
+        doNothing().when(notificationService).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -114,6 +121,9 @@ class StreakAchievementHandlerTest {
         assertThat(savedAchievement.getAchievementType()).isEqualTo(AchievementType.STREAK_ACHIEVEMENT);
         assertThat(savedAchievement.getLevel()).isEqualTo(1);
         assertThat(savedAchievement.getSchemaFrn()).isEqualTo("frn:flashdash:achievementschema:streak_achievement:1");
+
+        // Verify notification was sent once
+        verify(notificationService, times(1)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -140,6 +150,9 @@ class StreakAchievementHandlerTest {
 
         // Assert
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification was not sent
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -176,6 +189,9 @@ class StreakAchievementHandlerTest {
                         "frn:flashdash:achievementschema:streak_achievement:3",
                         "frn:flashdash:achievementschema:streak_achievement:4"
                 );
+
+        // Verify notification was sent once for each achievement level
+        verify(notificationService, times(4)).sendAchievementUnlockedEmail();
     }
 
     @Test
@@ -192,5 +208,8 @@ class StreakAchievementHandlerTest {
 
         // Assert - Threshold not met, so save should not be called
         verify(achievementRepository, never()).save(any(Achievement.class));
+
+        // Verify notification was not sent
+        verify(notificationService, never()).sendAchievementUnlockedEmail();
     }
 }
