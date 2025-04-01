@@ -7,5 +7,7 @@ public enum ErrorCode {
     E400001,
     // 404 Not Found
     E404001,
-    E404002;
+    E404002,
+    // 500 Internal Server Error
+    E500001
 }
