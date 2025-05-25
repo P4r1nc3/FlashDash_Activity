@@ -1,15 +1,11 @@
 package com.flashdash.activity.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 import com.p4r1nc3.flashdash.activity.model.LogActivityRequest.ActivityTypeEnum;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
-@Setter
 @Table(name = "activities")
 public class Activity {
 
@@ -34,4 +30,52 @@ public class Activity {
     private LocalDateTime updatedAt;
 
     public Activity() {}
+
+    public String getActivityFrn() {
+        return activityFrn;
+    }
+
+    public String getUserFrn() {
+        return userFrn;
+    }
+
+    public String getTargetFrn() {
+        return targetFrn;
+    }
+
+    public ActivityTypeEnum getActivity() {
+        return activity;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setActivityFrn(String activityFrn) {
+        this.activityFrn = activityFrn;
+    }
+
+    public void setUserFrn(String userFrn) {
+        this.userFrn = userFrn;
+    }
+
+    public void setTargetFrn(String targetFrn) {
+        this.targetFrn = targetFrn;
+    }
+
+    public void setActivity(ActivityTypeEnum activity) {
+        this.activity = activity;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

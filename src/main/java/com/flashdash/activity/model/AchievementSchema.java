@@ -1,15 +1,11 @@
 package com.flashdash.activity.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Entity
-@Getter
-@Setter
 @Table(name = "achievement_schemas")
 public class AchievementSchema {
 
@@ -41,6 +37,54 @@ public class AchievementSchema {
         this.level = level;
         this.threshold = threshold;
         this.name = name;
+        this.description = description;
+    }
+
+    public String getSchemaFrn() {
+        return schemaFrn;
+    }
+
+    public AchievementType getAchievementType() {
+        return achievementType;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public int getThreshold() {
+        return threshold;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setSchemaFrn(String schemaFrn) {
+        this.schemaFrn = schemaFrn;
+    }
+
+    public void setAchievementType(AchievementType achievementType) {
+        this.achievementType = achievementType;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public void setThreshold(int threshold) {
+        this.threshold = threshold;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
         this.description = description;
     }
 

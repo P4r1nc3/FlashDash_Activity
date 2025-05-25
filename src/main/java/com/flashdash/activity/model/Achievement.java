@@ -1,14 +1,10 @@
 package com.flashdash.activity.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
-@Setter
 @Table(name = "achievements")
 public class Achievement {
 
@@ -45,6 +41,54 @@ public class Achievement {
         this.achievementType = achievementType;
         this.level = level;
         this.schemaFrn = schemaFrn;
+        this.achievedAt = achievedAt;
+    }
+
+    public String getAchievementFrn() {
+        return achievementFrn;
+    }
+
+    public String getUserFrn() {
+        return userFrn;
+    }
+
+    public AchievementType getAchievementType() {
+        return achievementType;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public String getSchemaFrn() {
+        return schemaFrn;
+    }
+
+    public LocalDateTime getAchievedAt() {
+        return achievedAt;
+    }
+
+    public void setAchievementFrn(String achievementFrn) {
+        this.achievementFrn = achievementFrn;
+    }
+
+    public void setUserFrn(String userFrn) {
+        this.userFrn = userFrn;
+    }
+
+    public void setAchievementType(AchievementType achievementType) {
+        this.achievementType = achievementType;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public void setSchemaFrn(String schemaFrn) {
+        this.schemaFrn = schemaFrn;
+    }
+
+    public void setAchievedAt(LocalDateTime achievedAt) {
         this.achievedAt = achievedAt;
     }
 }

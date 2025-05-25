@@ -124,13 +124,6 @@
             <version>5.5.0</version>
             <scope>test</scope>
         </dependency>
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.34</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- FlashDash clients -->
         <dependency>
             <groupId>com.p4r1nc3.flashdash</groupId>
